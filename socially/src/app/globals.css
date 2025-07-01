@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-*:initial;
+  --breakpoint-xsm:500px;
+  --breakpoint-sm:600px;
+  --breakpoint-md:690px;
+  --breakpoint-lg:988px;
+  --breakpoint-xl:1078px;
+  --breakpoint-xxl:1265px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --purple: #723CEB;
+    --pink: #BF49B0;
+    --white:#FFFFFF;
+    --black:#06090F;
+    --orange:#FF902F;
+  }
+}
+
+body {
+  font-display: Oswald;
+  background-color:#171717;
+}
