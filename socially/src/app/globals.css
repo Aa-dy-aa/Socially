@@ -10,7 +10,7 @@
   --breakpoint-xxl:1265px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media {
   :root {
     --purple: #723CEB;
     --pink: #BF49B0;
@@ -24,3 +24,11 @@ body {
   font-display: Oswald;
   background-color:#171717;
 }
+.gradient {
+  background: linear-gradient(to right, var(--purple), var(--pink), var(--orange));
+  transition: background 3.2s ease;
+}
+.gradient:hover {
+  background: linear-gradient(to left, var(--purple), var(--pink), var(--orange));
+}
+
