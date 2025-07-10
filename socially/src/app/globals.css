@@ -17,6 +17,7 @@
     --white:#FFFFFF;
     --black:#06090F;
     --orange:#FF902F;
+    --gray:#828282;
   }
 }
 
@@ -31,4 +32,17 @@ body {
 .gradient:hover {
   background: linear-gradient(to left, var(--purple), var(--pink), var(--orange));
 }
+theme: {
+  extend: {
+    colors: {
+      purple: 'var(--purple)';
+      pink: 'var(--pink)';
+      white: 'var(--white)';
+      black: 'var(--black)';
+      orange: 'var(--orange)';
+      gray:'var(--gray)';
+    }
+  }
+}
+
 
