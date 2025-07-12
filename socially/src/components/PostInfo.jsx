@@ -1,10 +1,11 @@
 import React from 'react'
-import CustomImage from "./Image"
+import { SlOptions } from "react-icons/sl";
 
 function PostInfo() {
   return (
     <div className="cursor-pointer w-4 h-4 relative">
-        <CustomImage src="/image.jpg" alt="image" w={16} h={16}/>
+      <SlOptions />
+        {/* <CustomImage src="/image.jpg" alt="image" w={16} h={16}/> */}
     </div>
   );
 }; 

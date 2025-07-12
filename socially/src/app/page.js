@@ -11,9 +11,9 @@ export default function Home() {
         <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--purple)] via-[var(--pink)] to-[var(--orange)]" />
         </Link>
         <Link className="pb-3 flex items-center" href="/">Following</Link>
-        <Link className="pb-3 flex items-center" href="/">React.js</Link>
-        <Link className="pb-3 flex items-center" href="/">Javascript</Link>
-        <Link className="pb-3 flex items-center" href="/">CSS</Link>
+        <Link className="hidden pb-3 md:flex items-center" href="/">React.js</Link>
+        <Link className="hidden pb-3 md:flex items-center" href="/">Javascript</Link>
+        <Link className="hidden pb-3 md:flex items-center" href="/">CSS</Link>
       </div>
       <Share />
       <Feed />
