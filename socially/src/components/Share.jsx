@@ -8,7 +8,7 @@ import {
   ImageKitUploadNetworkError,
   ImageKitServerError,
 } from "@imagekit/next";
-import CustomImage from "./Image"; 
+import CustomImage from "./Image";
 import { GrEmoji, GrLocation } from "react-icons/gr";
 import { CgOptions } from "react-icons/cg";
 import {
@@ -16,22 +16,33 @@ import {
   MdOutlineGifBox,
   MdOutlineFormatItalic,
 } from "react-icons/md";
+import NextImage from "next/image";
 import { LuCalendarClock } from "react-icons/lu";
 import { BiBold } from "react-icons/bi";
 import { shareAction } from "./actions.jsx";
+import ImageEditor from "./ImageEditor";
 
 const Share = () => {
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef(null);
   const [desc, setDesc] = useState("");
-  const [uploading, setUploading] = useState(false); 
+  const [uploading, setUploading] = useState(false);
+  const [media, setMedia] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const [settings, setSettings] = useState({
+    type: "original", 
+    sensitive: false,
+  });
 
   const authenticator = async () => {
     try {
       const response = await fetch("/api/upload-auth");
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Authentication request failed with status ${response.status}: ${errorText}`);
+        throw new Error(
+          `Authentication request failed with status ${response.status}: ${errorText}`
+        );
       }
       const data = await response.json();
       const { signature, expire, token, publicKey } = data;
@@ -44,8 +55,8 @@ const Share = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    setUploading(true); 
-    setProgress(0); 
+    setUploading(true);
+    setProgress(0);
 
     const file = fileInputRef.current?.files[0];
     if (!file) {
@@ -57,7 +68,7 @@ const Share = () => {
       const authParams = await authenticator();
       const { signature, expire, token, publicKey } = authParams;
 
-      const result = await upload({
+      await upload({
         file,
         fileName: file.name,
         token,
@@ -75,9 +86,9 @@ const Share = () => {
 
       await shareAction(formData);
 
-      setDesc(""); 
+      setDesc("");
+      setMedia(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-
     } catch (err) {
       if (err instanceof ImageKitAbortError) {
         console.error("Upload aborted:", err.reason);
@@ -91,14 +102,23 @@ const Share = () => {
         console.error("Unknown upload error:", err);
       }
     } finally {
-      setUploading(false); 
+      setUploading(false);
     }
   };
+
+  const previewURL = media ? URL.createObjectURL(media) : null;
 
   return (
     <form onSubmit={handleUpload} className="p-4 flex gap-4">
       <div className="relative w-10 h-10 rounded-full overflow-hidden">
-        <CustomImage src="/image.jpg" alt="User Profile" w={100} h={100} tr={true} priority/>
+        <CustomImage
+          src="/image.jpg"
+          alt="User Profile"
+          w={100}
+          h={100}
+          tr={true}
+          priority
+        />
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
@@ -111,6 +131,33 @@ const Share = () => {
           className="bg-transparent outline-none placeholder:text-gray-400 text-xl"
         />
 
+        {previewURL && (
+          <div className="relative w-[500px] h-[600px] rounded-xl overflow-hidden bg-gray-100">
+            <NextImage
+              src={previewURL}
+              alt="Preview"
+              fill
+              style={{ objectFit: "contain" }}
+              className="rounded-xl"
+            />
+            <div
+              onClick={() => setIsEditorOpen(true)}
+              className="absolute top-2 right-2 bg-black bg-opacity-50 text-white py-1 px-4 rounded-full font-bold text-sm cursor-pointer"
+            >
+              Edit
+            </div>
+          </div>
+        )}
+
+        {isEditorOpen && previewURL && (
+          <ImageEditor
+            onClose={() => setIsEditorOpen(false)}
+            previewUrl={previewURL}
+            settings={settings}
+            setSettings={setSettings}
+          />
+        )}
+
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex gap-4 flex-wrap">
             <input
@@ -118,6 +165,7 @@ const Share = () => {
               type="file"
               id="file"
               className="hidden"
+              onChange={(e) => setMedia(e.target.files[0])}
             />
             <label htmlFor="file" className="cursor-pointer">
               <MdOutlineAddPhotoAlternate className="w-5 h-5 cursor-pointer text-purple-600" />
@@ -134,16 +182,20 @@ const Share = () => {
           <button
             type="submit"
             className="bg-white text-black font-bold rounded-full py-2 px-4"
-            disabled={uploading} 
+            disabled={uploading}
           >
             {uploading ? `Uploading... ${Math.round(progress)}%` : "Post"}
           </button>
         </div>
 
-        {uploading && <progress value={progress} max={100} className="w-full mt-2" />}
+        {uploading && (
+          <progress value={progress} max={100} className="w-full mt-2" />
+        )}
       </div>
     </form>
   );
 };
 
 export default Share;
+
+
