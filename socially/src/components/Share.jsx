@@ -1,26 +1,104 @@
 "use client";
-import React, { useState } from "react";
-import CustomImage from "./Image";
+
+import React, { useState, useRef } from "react";
+import {
+  upload,
+  ImageKitAbortError,
+  ImageKitInvalidRequestError,
+  ImageKitUploadNetworkError,
+  ImageKitServerError,
+} from "@imagekit/next";
+import CustomImage from "./Image"; 
 import { GrEmoji, GrLocation } from "react-icons/gr";
 import { CgOptions } from "react-icons/cg";
-import {MdOutlineAddPhotoAlternate,MdOutlineGifBox,MdOutlineFormatItalic,} from "react-icons/md";
+import {
+  MdOutlineAddPhotoAlternate,
+  MdOutlineGifBox,
+  MdOutlineFormatItalic,
+} from "react-icons/md";
 import { LuCalendarClock } from "react-icons/lu";
 import { BiBold } from "react-icons/bi";
-import { shareAction } from "@/actions";
+import { shareAction } from "./actions.jsx";
 
 const Share = () => {
-  const [media, setMedia] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const fileInputRef = useRef(null);
+  const [desc, setDesc] = useState("");
+  const [uploading, setUploading] = useState(false); 
 
-  const handleMediaChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setMedia(e.target.files[0]);
+  const authenticator = async () => {
+    try {
+      const response = await fetch("/api/upload-auth");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Authentication request failed with status ${response.status}: ${errorText}`);
+      }
+      const data = await response.json();
+      const { signature, expire, token, publicKey } = data;
+      return { signature, expire, token, publicKey };
+    } catch (error) {
+      console.error("Authentication error during file upload:", error);
+      throw new Error("Failed to get upload authentication parameters.");
+    }
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    setUploading(true); 
+    setProgress(0); 
+
+    const file = fileInputRef.current?.files[0];
+    if (!file) {
+      setUploading(false);
+      return;
+    }
+
+    try {
+      const authParams = await authenticator();
+      const { signature, expire, token, publicKey } = authParams;
+
+      const result = await upload({
+        file,
+        fileName: file.name,
+        token,
+        expire,
+        signature,
+        publicKey,
+        onProgress: (evt) => {
+          setProgress((evt.loaded / evt.total) * 100);
+        },
+      });
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("desc", desc);
+
+      await shareAction(formData);
+
+      setDesc(""); 
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+    } catch (err) {
+      if (err instanceof ImageKitAbortError) {
+        console.error("Upload aborted:", err.reason);
+      } else if (err instanceof ImageKitInvalidRequestError) {
+        console.error("Invalid upload request:", err.message);
+      } else if (err instanceof ImageKitUploadNetworkError) {
+        console.error("Network issue during upload:", err.message);
+      } else if (err instanceof ImageKitServerError) {
+        console.error("ImageKit server error:", err.message);
+      } else {
+        console.error("Unknown upload error:", err);
+      }
+    } finally {
+      setUploading(false); 
     }
   };
 
   return (
-    <form className="p-4 flex gap-4" action={shareAction}>
+    <form onSubmit={handleUpload} className="p-4 flex gap-4">
       <div className="relative w-10 h-10 rounded-full overflow-hidden">
-        <CustomImage src="/image.jpg" alt="image" w={100} h={100} tr={true} />
+        <CustomImage src="/image.jpg" alt="User Profile" w={100} h={100} tr={true} priority/>
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
@@ -28,32 +106,44 @@ const Share = () => {
           type="text"
           name="desc"
           placeholder="What is happening?!"
-          className="bg-transparent outline-none placeholder:text-(--gray) text-xl"
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          className="bg-transparent outline-none placeholder:text-gray-400 text-xl"
         />
 
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex gap-4 flex-wrap">
-            <input type="file" name="file" id="file" onChange={handleMediaChange} className="hidden" w={20} h={20} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="file"
+              className="hidden"
+            />
             <label htmlFor="file" className="cursor-pointer">
-            <MdOutlineAddPhotoAlternate className="w-5 h-5 cursor-pointer text-(--purple)" />
+              <MdOutlineAddPhotoAlternate className="w-5 h-5 cursor-pointer text-purple-600" />
             </label>
-            <MdOutlineGifBox className="w-5 h-5 cursor-pointer text-(--purple)" />
-            <CgOptions className="w-5 h-5 cursor-pointer text-(--purple)" />
-            <GrEmoji className="w-5 h-5 cursor-pointer text-(--purple)" />
-            <LuCalendarClock className="w-5 h-5 cursor-pointer text-(--purple)" />
-            <GrLocation className="w-5 h-5 cursor-pointer text-(--purple)" />
-            <BiBold className="w-5 h-5 cursor-pointer text-(--purple)" />
-            <MdOutlineFormatItalic className="w-5 h-5 cursor-pointer text-(--purple)" />
+            <MdOutlineGifBox className="w-5 h-5 cursor-pointer text-purple-600" />
+            <CgOptions className="w-5 h-5 cursor-pointer text-purple-600" />
+            <GrEmoji className="w-5 h-5 cursor-pointer text-purple-600" />
+            <LuCalendarClock className="w-5 h-5 cursor-pointer text-purple-600" />
+            <GrLocation className="w-5 h-5 cursor-pointer text-purple-600" />
+            <BiBold className="w-5 h-5 cursor-pointer text-purple-600" />
+            <MdOutlineFormatItalic className="w-5 h-5 cursor-pointer text-purple-600" />
           </div>
 
-          <button className="bg-white text-black font-bold rounded-full py-2 px-4">
-            Post
+          <button
+            type="submit"
+            className="bg-white text-black font-bold rounded-full py-2 px-4"
+            disabled={uploading} 
+          >
+            {uploading ? `Uploading... ${Math.round(progress)}%` : "Post"}
           </button>
         </div>
+
+        {uploading && <progress value={progress} max={100} className="w-full mt-2" />}
       </div>
     </form>
   );
 };
 
 export default Share;
-
