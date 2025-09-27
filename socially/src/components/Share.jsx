@@ -109,7 +109,7 @@ const Share = () => {
   const previewURL = media ? URL.createObjectURL(media) : null;
 
   return (
-    <form onSubmit={handleUpload} className="p-4 flex gap-4">
+    <form onSubmit={handleUpload} action={(formData)=>shareAction(formData,settings)} className="p-4 flex gap-4">
       <div className="relative w-10 h-10 rounded-full overflow-hidden">
         <CustomImage
           src="/image.jpg"
@@ -132,27 +132,34 @@ const Share = () => {
         />
 
         {previewURL && (
-          <div className="relative w-[500px] h-[600px] rounded-xl overflow-hidden bg-gray-100">
-            <NextImage
-              src={previewURL}
-              alt="Preview"
-              fill
-              style={{ objectFit: "contain" }}
-              className="rounded-xl"
-            />
-            <div
-              onClick={() => setIsEditorOpen(true)}
-              className="absolute top-2 right-2 bg-black bg-opacity-50 text-white py-1 px-4 rounded-full font-bold text-sm cursor-pointer"
-            >
-              Edit
-            </div>
-          </div>
-        )}
+  <div className="relative w-[500px] h-[600px] rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+    <NextImage
+      src={previewURL}
+      alt="Preview"
+      width={600}
+      height={600}
+      className={`w-full ${
+        settings.type === "original"
+          ? "h-full object-contain"
+          : settings.type === "square"
+          ? "aspect-square object-cover object-center"
+          : "aspect-video object-cover"
+      }`}
+    />
+    <div
+      onClick={() => setIsEditorOpen(true)}
+      className="absolute top-2 right-2 bg-black opacity-75 text-white py-1 px-4 rounded-full font-bold text-sm cursor-pointer"
+    >
+      Edit
+    </div>
+  </div>
+)}
+
 
         {isEditorOpen && previewURL && (
           <ImageEditor
             onClose={() => setIsEditorOpen(false)}
-            previewUrl={previewURL}
+            previewURL={previewURL}
             settings={settings}
             setSettings={setSettings}
           />
