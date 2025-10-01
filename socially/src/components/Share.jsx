@@ -68,7 +68,7 @@ const Share = () => {
       const authParams = await authenticator();
       const { signature, expire, token, publicKey } = authParams;
 
-      await upload({
+      const uploadResponse = await upload({
         file,
         fileName: file.name,
         token,
@@ -84,10 +84,14 @@ const Share = () => {
       formData.append("file", file);
       formData.append("desc", desc);
 
-      await shareAction(formData);
+      await shareAction(formData, settings);
 
       setDesc("");
       setMedia(null);
+      setSettings({
+        type: "original",
+        sensitive: false,
+      });
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       if (err instanceof ImageKitAbortError) {
@@ -109,7 +113,7 @@ const Share = () => {
   const previewURL = media ? URL.createObjectURL(media) : null;
 
   return (
-    <form onSubmit={handleUpload} action={(formData)=>shareAction(formData,settings)} className="p-4 flex gap-4">
+    <form onSubmit={handleUpload} className="p-4 flex gap-4">
       <div className="relative w-10 h-10 rounded-full overflow-hidden">
         <CustomImage
           src="/image.jpg"
